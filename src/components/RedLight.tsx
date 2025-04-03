@@ -9,7 +9,7 @@ import Svg7 from "../images/7.svg";
 import logo from "../images/grandprix.svg";
 import FullReactionVideo from "../assets/f1_full.mp4";
 import CountdownSound from "../assets/countdown_sound.mp3";
-import CarStartSound from "../assets/car_start_sound.mp3";
+import CarStartSound from "../assets/F1_RTT_movie_after_user_tap_sound.mp3";
 
 const TapButton = ({
   onClick,
@@ -176,7 +176,8 @@ const RedLight: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const countdownAudioRef = useRef<HTMLAudioElement>(null);
-  const startAudioRef = useRef<HTMLAudioElement>(null);
+  const startAudioContextRef = useRef<AudioContext | null>(null);
+  const startAudioBufferRef = useRef<AudioBuffer | null>(null);
   const startButtonRef = useRef<HTMLButtonElement>(null);
   const backgroundImageRef = useRef<HTMLImageElement | null>(null);
   const cacheBustTimestamp = useRef(Date.now());
@@ -185,10 +186,12 @@ const RedLight: React.FC = () => {
   const BUTTON_ENABLE_TIME = 5.2; // Time in seconds when countdown ends
   const RANDOM_DELAY_MAX = 3000; // Maximum delay in ms (3 seconds)
 
+  // Initialize Web Audio API and preload audio
   useEffect(() => {
     backgroundImageRef.current = preloadBackgroundImage();
 
-    const preloadMedia = () => {
+    const preloadMedia = async () => {
+      // Video preloading
       if (videoRef.current) {
         videoRef.current.src = `${FullReactionVideo}?t=${cacheBustTimestamp.current}`;
         videoRef.current.preload = "auto";
@@ -199,6 +202,8 @@ const RedLight: React.FC = () => {
         videoRef.current.onerror = () => setVideoError("Failed to load video.");
         videoRef.current.load();
       }
+
+      // Countdown audio preloading
       if (countdownAudioRef.current) {
         countdownAudioRef.current.src = `${CountdownSound}?t=${cacheBustTimestamp.current}`;
         countdownAudioRef.current.preload = "auto";
@@ -206,12 +211,20 @@ const RedLight: React.FC = () => {
           console.log("Countdown audio loaded");
         countdownAudioRef.current.load();
       }
-      if (startAudioRef.current) {
-        startAudioRef.current.src = `${CarStartSound}?t=${cacheBustTimestamp.current}`;
-        startAudioRef.current.preload = "auto";
-        startAudioRef.current.onloadeddata = () =>
-          console.log("Start audio loaded");
-        startAudioRef.current.load();
+
+      // Web Audio API for car start sound
+      try {
+        startAudioContextRef.current = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+        const response = await fetch(
+          `${CarStartSound}?t=${cacheBustTimestamp.current}`
+        );
+        const arrayBuffer = await response.arrayBuffer();
+        startAudioBufferRef.current =
+          await startAudioContextRef.current.decodeAudioData(arrayBuffer);
+        console.log("Car start audio buffer loaded");
+      } catch (error) {
+        console.error("Failed to load car start audio:", error);
       }
     };
 
@@ -219,15 +232,37 @@ const RedLight: React.FC = () => {
 
     return () => {
       if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
-      [videoRef, countdownAudioRef, startAudioRef].forEach((ref) => {
-        if (ref.current) {
-          ref.current.pause();
-          ref.current.src = "";
-          ref.current.load();
-        }
-      });
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = "";
+        videoRef.current.load();
+      }
+      if (countdownAudioRef.current) {
+        countdownAudioRef.current.pause();
+        countdownAudioRef.current.src = "";
+        countdownAudioRef.current.load();
+      }
+      if (startAudioContextRef.current) {
+        startAudioContextRef.current.close();
+        startAudioContextRef.current = null;
+      }
     };
   }, []);
+
+  // Play car start sound with Web Audio API
+  const playCarStartSound = () => {
+    if (
+      startAudioContextRef.current &&
+      startAudioBufferRef.current &&
+      startAudioContextRef.current.state !== "closed"
+    ) {
+      const source = startAudioContextRef.current.createBufferSource();
+      source.buffer = startAudioBufferRef.current;
+      source.connect(startAudioContextRef.current.destination);
+      source.start(0); // Play immediately
+      console.log("Car start sound played at:", Date.now());
+    }
+  };
 
   useEffect(() => {
     if (gameState === "playing" && videoRef.current && videoReady) {
@@ -287,37 +322,29 @@ const RedLight: React.FC = () => {
     setGameState("playing");
   };
 
-  const handleTapClick = async () => {
+  const handleTapClick = () => {
     if (gameState === "waitingForTap" && buttonActive && reactionStartTime) {
-      const timeDiff = Date.now() - reactionStartTime;
+      const tapTime = Date.now();
+      const timeDiff = tapTime - reactionStartTime;
       setReactionTime(timeDiff);
       setButtonActive(false);
 
-      const tapTime = Date.now();
       console.log("Tap clicked at:", tapTime);
 
-      try {
-        if (startAudioRef.current) {
-          startAudioRef.current.currentTime = 0;
-          await startAudioRef.current.play();
-          console.log(
-            "Audio played at:",
-            Date.now(),
-            "Delay:",
-            Date.now() - tapTime
-          );
-        }
-        if (videoRef.current) {
-          await videoRef.current.play();
-          console.log(
-            "Video played at:",
-            Date.now(),
-            "Delay:",
-            Date.now() - tapTime
-          );
-        }
-      } catch (err) {
-        console.log("Play failed:", err);
+      // Play audio and video synchronously
+      playCarStartSound(); // Using Web Audio API for minimal latency
+      if (videoRef.current) {
+        videoRef.current
+          .play()
+          .then(() => {
+            console.log(
+              "Video played at:",
+              Date.now(),
+              "Delay:",
+              Date.now() - tapTime
+            );
+          })
+          .catch((err) => console.log("Video play failed:", err));
       }
 
       if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
@@ -344,20 +371,35 @@ const RedLight: React.FC = () => {
       setShowMissionBanner(false);
       setVideoReady(false);
       const timestamp = Date.now();
-      [videoRef, countdownAudioRef, startAudioRef].forEach((ref) => {
-        if (ref.current) {
-          ref.current.pause();
-          ref.current.currentTime = 0;
-          ref.current.src = `${
-            ref === videoRef
-              ? FullReactionVideo
-              : ref === countdownAudioRef
-              ? CountdownSound
-              : CarStartSound
-          }?t=${timestamp}`;
-          ref.current.load();
-        }
-      });
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+        videoRef.current.src = `${FullReactionVideo}?t=${timestamp}`;
+        videoRef.current.load();
+      }
+      if (countdownAudioRef.current) {
+        countdownAudioRef.current.pause();
+        countdownAudioRef.current.currentTime = 0;
+        countdownAudioRef.current.src = `${CountdownSound}?t=${timestamp}`;
+        countdownAudioRef.current.load();
+      }
+      if (startAudioContextRef.current) {
+        startAudioContextRef.current.close();
+        startAudioContextRef.current = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+        fetch(`${CarStartSound}?t=${timestamp}`)
+          .then((response) => response.arrayBuffer())
+          .then((arrayBuffer) =>
+            startAudioContextRef.current!.decodeAudioData(arrayBuffer)
+          )
+          .then((buffer) => {
+            startAudioBufferRef.current = buffer;
+            console.log("Car start audio reloaded");
+          })
+          .catch((error) =>
+            console.error("Failed to reload car start audio:", error)
+          );
+      }
       cacheBustTimestamp.current = timestamp;
       backgroundImageRef.current = preloadBackgroundImage();
     }, 50);
@@ -554,7 +596,6 @@ const RedLight: React.FC = () => {
         )}
 
         <audio ref={countdownAudioRef} preload="auto" />
-        <audio ref={startAudioRef} preload="auto" />
       </Box>
 
       <Box
