@@ -1,0 +1,104 @@
+@font-face {
+  font-family: 'MyCustomFont'; /* You can name this anything you like */
+  src: url('./assets/display-regular.ttf') format('truetype'); /* Path to your .ttf file */
+  font-weight: normal; /* Optional: specify weight */
+  font-style: normal; /* Optional: specify style */
+  }
+
+  @font-face {
+    font-family: 'Hiragino Kaku Gothic Pro';
+    src: url('./assets/Hiragino-Kakugo-Pro\ W6.otf') format('opentype');
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  touch-action: none;
+}
+
+body {
+  overflow: hidden;
+  overscroll-behavior: none; /* Prevent pull-to-refresh and bounce effects */
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: 'MyCustomFont';
+  overflow: hidden;
+  position: relative;
+}
+
+/* Enhanced pulse animation for the action button */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* Fade animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Glow effect for reaction time */
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 5px #ff6699, 0 0 10px #ff6699;
+  }
+  50% {
+    text-shadow: 0 0 20px #ff6699, 0 0 30px #ff6699;
+  }
+  100% {
+    text-shadow: 0 0 5px #ff6699, 0 0 10px #ff6699;
+  }
+}
+
+/* Subtler glow effect for reaction time */
+@keyframes subtleGlow {
+  0% {
+    text-shadow: 0 0 3px #ff6699;
+  }
+  50% {
+    text-shadow: 0 0 8px #ff6699;
+  }
+  100% {
+    text-shadow: 0 0 3px #ff6699;
+  }
+}
+
+/* Reset button styles */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'MyCustomFont', sans-serif;
+  cursor: pointer;
+  outline: inherit;
+}
+
+/* Modal overlay styling */
+.modal-backdrop {
+  background-color: transparent !important;
+}

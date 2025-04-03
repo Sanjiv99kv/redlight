@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="137.266" height="147" viewBox="0 0 137.266 147">
+  <defs>
+    <filter id="Path_39" x="0" y="0" width="137.266" height="147" filterUnits="userSpaceOnUse">
+      <feOffset dy="6" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Group_2758" data-name="Group 2758" transform="translate(-119 -582)">
+    <g id="アクセルボタン" transform="translate(-125 -78)" style="isolation: isolate">
+      <g transform="matrix(1, 0, 0, 1, 244, 660)" filter="url(#Path_39)">
+        <path id="Path_39-2" data-name="Path 39" d="M16.853,0h85.56c9.308,0,16.853,5.82,16.853,13V116c0,7.18-7.545,13-16.853,13H16.853c-9.308,0,11.411-16.692,11.411-23.872V80.138L0,13C0,5.82,7.545,0,16.853,0Z" transform="translate(9 3)" opacity="0.118"/>
+      </g>
+      <text id="MISSION" transform="translate(320.266 695)" fill="#fff" font-size="23" font-family="SegoeUI, Segoe UI" letter-spacing="0.014em"><tspan x="-19.419" y="0">TAP</tspan><tspan x="-28.761" y="24">HARE</tspan></text>
+    </g>
+  </g>
+</svg>

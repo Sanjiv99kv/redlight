@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="319" height="60" viewBox="0 0 319 60">
+  <defs>
+    <filter id="Rectangle_122" x="0" y="0" width="319" height="60" filterUnits="userSpaceOnUse">
+      <feOffset dy="3" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-opacity="0.161"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="ボタン" transform="translate(9 6)">
+    <g transform="matrix(1, 0, 0, 1, -9, -6)" filter="url(#Rectangle_122)">
+      <g id="Rectangle_122-2" data-name="Rectangle 122" transform="translate(9 6)" fill="rgba(255,255,255,0.61)" stroke="#fff" stroke-width="1">
+        <rect width="301" height="42" rx="21" stroke="none"/>
+        <rect x="0.5" y="0.5" width="300" height="41" rx="20.5" fill="none"/>
+      </g>
+    </g>
+    <text id="START" transform="translate(115 27)" fill="#15151e" font-size="18" font-family="SegoeUI, Segoe UI" letter-spacing="0.099em"><tspan x="0" y="0">START</tspan></text>
+  </g>
+</svg>

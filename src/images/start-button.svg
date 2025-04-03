@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="119.266" height="129" viewBox="0 0 119.266 129">
+  <g id="アクセルボタン" transform="translate(-253 -663)" style="isolation: isolate">
+    <path id="Path_39" data-name="Path 39" d="M16.853,0h85.56c9.308,0,16.853,5.82,16.853,13V116c0,7.18-7.545,13-16.853,13H16.853c-9.308,0,11.411-16.692,11.411-23.872V80.138L0,13C0,5.82,7.545,0,16.853,0Z" transform="translate(253 663)" fill="#dd1c1c" style="mix-blend-mode: multiply;isolation: isolate"/>
+    <text id="MISSION" transform="translate(320.266 695)" fill="#fff" font-size="23" font-family="SegoeUI, Segoe UI" letter-spacing="0.014em"><tspan x="-19.419" y="0">TAP</tspan><tspan x="-28.761" y="24">HERE</tspan></text>
+  </g>
+</svg>
