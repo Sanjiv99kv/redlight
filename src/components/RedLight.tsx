@@ -60,7 +60,7 @@ const TapButton = ({
           transform="translate(320.266 695)"
           fill="#fff"
           fontSize="20"
-          fontFamily="MyCustomFont"
+          fontFamily="Formula1" // Consistent with second snippet
           letterSpacing="0.014em"
         >
           <tspan x="-20.419" y="8">
@@ -82,7 +82,7 @@ const preloadBackgroundImage = () => {
   return img;
 };
 
-const japaneseFontStyle = { fontFamily: "JapaneseFont" };
+const japaneseFontStyle = { fontFamily: "HiraginoBold" }; // Updated to HiraginoBold
 
 const MissionBanner = ({
   visible,
@@ -137,7 +137,7 @@ const MissionBanner = ({
           fontSize: "18px",
           margin: 0,
           fontWeight: "bold",
-          fontFamily: "'MyCustomFont', sans-serif",
+          fontFamily: "Formula1", // Consistent with second snippet
         }}
       >
         MISSION
@@ -148,7 +148,7 @@ const MissionBanner = ({
           color: "black",
           fontSize: "12px",
           margin: "8px 0 0",
-          ...japaneseFontStyle,
+          ...japaneseFontStyle, // Now uses HiraginoBold
           maxWidth: "90%",
         }}
       >
@@ -315,7 +315,7 @@ const RedLight: React.FC = () => {
         display: "flex",
         flexDirection: "column",
         backgroundColor: "#000",
-        fontFamily: "'MyCustomFont', sans-serif",
+        fontFamily: "Formula1", // Consistent with second snippet
         touchAction: "none",
       }}
     >
@@ -411,6 +411,7 @@ const RedLight: React.FC = () => {
                           : "default",
                       boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                       transition: "all 0.3s ease",
+                      fontFamily: "Formula1", // Added Formula1 font
                       "&:hover": {
                         backgroundColor:
                           gameState === "init" && videoReady
@@ -519,7 +520,8 @@ const RedLight: React.FC = () => {
             marginBottom: "6px",
             letterSpacing: "1px",
             fontWeight: "bold",
-            "& .highlight-red": { color: "#E00400", fontWeight: 900 },
+            fontFamily: "Formula1", // Consistent with second snippet
+            "& .highlight-red": { color: "#E00400" },
           }}
         >
           <span className="highlight-red">R</span>EACTION TIME{" "}
@@ -532,8 +534,7 @@ const RedLight: React.FC = () => {
             fontSize: "12px",
             margin: 0,
             marginBottom: "5px",
-            fontWeight: "bold",
-            fontFamily: "'Hiragino Kaku Gothic Pro Bold'",
+            fontFamily: "HiraginoBold", // Updated to HiraginoBold
           }}
         >
           リアクションタイムテスト
