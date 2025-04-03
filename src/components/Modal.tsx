@@ -432,10 +432,15 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
 
         setTimeout(() => {
           downloadLink.click();
+          /*
           document.body.removeChild(downloadLink);
           window.URL.revokeObjectURL(blobUrl);
           cleanupAfterShare();
+          */
         }, 100);
+        document.body.removeChild(downloadLink);
+        window.URL.revokeObjectURL(blobUrl);
+        cleanupAfterShare();
       }
     } catch (downloadError) {
       console.error("Download failed:", downloadError);
