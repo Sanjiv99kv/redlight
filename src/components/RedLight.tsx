@@ -7,8 +7,10 @@ import { Box, CircularProgress } from "@mui/material";
 import Modal from "./Modal";
 import Svg7 from "../images/7.svg";
 import logo from "../images/grandprix.svg";
-import FullReactionVideo from "../assets/f1_new.mp4"; // Replace with your single video file
+import FullReactionVideo from "../assets/f1_full.mp4";
 import Section3Sound from "../assets/F1_RTT_movie_after_user_tap_sound.mp3";
+import CountdownSound from "../assets/countdown_sound.mp3";
+import CarStartSound from "../assets/car_start_sound.mp3";
 
 const TapButton = ({
   onClick,
@@ -174,17 +176,20 @@ const RedLight: React.FC = () => {
   const [isVideoLoading, setIsVideoLoading] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const countdownAudioRef = useRef<HTMLAudioElement>(null);
+  const startAudioRef = useRef<HTMLAudioElement>(null);
+  const afterTapAudioRef = useRef<HTMLAudioElement>(null);
   const startButtonRef = useRef<HTMLButtonElement>(null);
   const backgroundImageRef = useRef<HTMLImageElement | null>(null);
   const cacheBustTimestamp = useRef(Date.now());
 
-  const BUTTON_ENABLE_TIME = 5.2; // Time in seconds when button should be enabled
+  const BUTTON_ENABLE_TIME = 5.2; // Time in seconds when countdown ends
+  const RANDOM_DELAY_MAX = 3000; // Maximum delay in ms (3 seconds)
 
   useEffect(() => {
     backgroundImageRef.current = preloadBackgroundImage();
 
-    const preloadVideo = () => {
+    const preloadMedia = () => {
       if (videoRef.current) {
         videoRef.current.src = `${FullReactionVideo}?t=${cacheBustTimestamp.current}`;
         videoRef.current.preload = "auto";
@@ -192,21 +197,35 @@ const RedLight: React.FC = () => {
         videoRef.current.onerror = () => setVideoError("Failed to load video.");
         videoRef.current.load();
       }
+      if (countdownAudioRef.current) {
+        countdownAudioRef.current.src = `${CountdownSound}?t=${cacheBustTimestamp.current}`;
+        countdownAudioRef.current.preload = "auto";
+        countdownAudioRef.current.load();
+      }
+      if (startAudioRef.current) {
+        startAudioRef.current.src = `${CarStartSound}?t=${cacheBustTimestamp.current}`;
+        startAudioRef.current.preload = "auto";
+        startAudioRef.current.load();
+      }
+      if (afterTapAudioRef.current) {
+        afterTapAudioRef.current.src = `${Section3Sound}?t=${cacheBustTimestamp.current}`;
+        afterTapAudioRef.current.preload = "auto";
+        afterTapAudioRef.current.load();
+      }
     };
 
-    preloadVideo();
+    preloadMedia();
 
     return () => {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.src = "";
-        videoRef.current.load();
-      }
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-        audioRef.current.load();
-      }
+      [videoRef, countdownAudioRef, startAudioRef, afterTapAudioRef].forEach(
+        (ref) => {
+          if (ref.current) {
+            ref.current.pause();
+            ref.current.src = "";
+            ref.current.load();
+          }
+        }
+      );
     };
   }, []);
 
@@ -218,15 +237,31 @@ const RedLight: React.FC = () => {
         setGameState("init");
       });
 
+      if (countdownAudioRef.current) {
+        countdownAudioRef.current.currentTime = 0;
+        countdownAudioRef.current.play();
+      }
+
       const handleTimeUpdate = () => {
         if (
           videoRef.current &&
           videoRef.current.currentTime >= BUTTON_ENABLE_TIME
         ) {
           videoRef.current.pause();
-          setButtonActive(true);
-          setReactionStartTime(Date.now());
-          setGameState("waitingForTap");
+          if (countdownAudioRef.current) {
+            countdownAudioRef.current.pause();
+          }
+
+          // Add random delay between 0 and 3 seconds
+          const randomDelay = Math.floor(
+            Math.random() * (RANDOM_DELAY_MAX + 1)
+          );
+
+          setTimeout(() => {
+            setButtonActive(true);
+            setReactionStartTime(Date.now());
+            setGameState("waitingForTap");
+          }, randomDelay);
         }
       };
 
@@ -258,12 +293,16 @@ const RedLight: React.FC = () => {
       setButtonActive(false);
       if (videoRef.current) {
         videoRef.current.play();
-        if (audioRef.current) {
-          audioRef.current.currentTime = 0;
-          audioRef.current.play();
+        if (startAudioRef.current) {
+          startAudioRef.current.currentTime = 0;
+          startAudioRef.current.play();
         }
         setTimeout(() => {
           videoRef.current?.pause();
+          if (afterTapAudioRef.current) {
+            afterTapAudioRef.current.currentTime = 0;
+            afterTapAudioRef.current.play();
+          }
           setGameState("results");
           setOpenModal(true);
         }, 1500);
@@ -282,18 +321,24 @@ const RedLight: React.FC = () => {
       setShowMissionBanner(false);
       setVideoReady(false);
       const timestamp = Date.now();
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-        videoRef.current.src = `${FullReactionVideo}?t=${timestamp}`;
-        videoRef.current.load();
-      }
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        audioRef.current.src = `${Section3Sound}?t=${timestamp}`;
-        audioRef.current.load();
-      }
+      [videoRef, countdownAudioRef, startAudioRef, afterTapAudioRef].forEach(
+        (ref) => {
+          if (ref.current) {
+            ref.current.pause();
+            ref.current.currentTime = 0;
+            ref.current.src = `${
+              ref === videoRef
+                ? FullReactionVideo
+                : ref === countdownAudioRef
+                ? CountdownSound
+                : ref === startAudioRef
+                ? CarStartSound
+                : Section3Sound
+            }?t=${timestamp}`;
+            ref.current.load();
+          }
+        }
+      );
       cacheBustTimestamp.current = timestamp;
       backgroundImageRef.current = preloadBackgroundImage();
     }, 50);
@@ -488,7 +533,9 @@ const RedLight: React.FC = () => {
           />
         )}
 
-        <audio ref={audioRef} preload="auto" />
+        <audio ref={countdownAudioRef} preload="auto" />
+        <audio ref={startAudioRef} preload="auto" />
+        <audio ref={afterTapAudioRef} preload="auto" />
       </Box>
 
       <Box
