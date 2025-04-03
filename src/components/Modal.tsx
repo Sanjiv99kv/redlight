@@ -21,11 +21,11 @@ import backgroundImage from "../images/7.svg";
 import snsBgImage from "../images/SNS-bg.png";
 
 const fontStyle = {
-  fontFamily: "'MyCustomFont', sans-serif",
+  fontFamily: "Formula1", // Updated to Formula1
 };
 
 const japaneseFontStyle = {
-  fontFamily: "'JapaneseFont', sans-serif",
+  fontFamily: "HiraginoBold", // Updated to HiraginoBold
 };
 
 interface ModalProps {
@@ -377,7 +377,6 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
     }
   };
 
-  // Improved downloadImage function to ensure modal closes properly on all devices
   // Improved downloadImage function with LIFF-specific download attempt
   const downloadImage = async () => {
     if (!scoreImageUrl) return;
@@ -409,8 +408,6 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
           // Fallback: If the download doesn't start, prompt the user
           if (document.hasFocus()) {
             // Assume download failed if the page still has focus
-
-            // Optionally trigger share as a backup
             if (liff.isApiAvailable("shareTargetPicker")) {
               liff.shareTargetPicker([
                 {
@@ -432,19 +429,13 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
 
         setTimeout(() => {
           downloadLink.click();
-          /*
           document.body.removeChild(downloadLink);
           window.URL.revokeObjectURL(blobUrl);
           cleanupAfterShare();
-          */
         }, 100);
-        document.body.removeChild(downloadLink);
-        window.URL.revokeObjectURL(blobUrl);
-        cleanupAfterShare();
       }
     } catch (downloadError) {
       console.error("Download failed:", downloadError);
-      alert();
       if (isInLiff && liff.isApiAvailable("shareTargetPicker")) {
         liff.shareTargetPicker([
           {
@@ -484,7 +475,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
       "https://miniapp.line.me/2007078799-0oWyrXee/circuitjourney";
   };
 
-  // Rest of the component (UI) remains unchanged
+  // Rest of the component (UI)
   return (
     <>
       <MuiModal
@@ -506,21 +497,19 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
           ...fontStyle,
           touchAction: "pan-y",
           userSelect: "none",
-          overflow: "auto", // Keep overflow auto to enable scrolling
+          overflow: "auto",
           pointerEvents: "auto",
           margin: 0,
           padding: 0,
           boxSizing: "border-box",
-          // Hide scrollbar for all devices by default
           "&::-webkit-scrollbar": {
-            display: "none", // Hide scrollbar for Chrome/Safari/Edge
+            display: "none",
           },
-          scrollbarWidth: "none", // Hide scrollbar for Firefox
-          msOverflowStyle: "none", // Hide scrollbar for IE
-          // Only show scrollbar on very small devices (iPhone SE/Mini size)
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
           "@media (max-width: 375px) and (max-height: 667px)": {
             "&::-webkit-scrollbar": {
-              display: "block", // Show scrollbar
+              display: "block",
               width: "8px",
               background: "rgba(0, 0, 0, 0.1)",
             },
@@ -547,7 +536,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
             padding: 0,
             touchAction: "none",
             pointerEvents: "none",
-            boxSizing: "border-box", // Ensure padding doesn't add to dimensions
+            boxSizing: "border-box",
           },
         }}
         disableScrollLock={false}
@@ -576,7 +565,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
             backgroundAttachment: "fixed",
-            overflow: "auto", // Keep overflow auto to enable scrolling
+            overflow: "auto",
             overflowX: "hidden",
             zIndex: 2,
             margin: 0,
@@ -587,16 +576,14 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
             pointerEvents: "auto",
             boxSizing: "border-box",
             ...fontStyle,
-            // Hide scrollbar for all devices by default
             "&::-webkit-scrollbar": {
-              display: "none", // Hide scrollbar for Chrome/Safari/Edge
+              display: "none",
             },
-            scrollbarWidth: "none", // Hide scrollbar for Firefox
-            msOverflowStyle: "none", // Hide scrollbar for IE
-            // Only show scrollbar on very small devices (iPhone SE/Mini size)
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
             "@media (max-width: 375px) and (max-height: 667px)": {
               "&::-webkit-scrollbar": {
-                display: "block", // Show scrollbar
+                display: "block",
                 width: "8px",
                 background: "rgba(0, 0, 0, 0.2)",
               },
@@ -624,31 +611,29 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
               borderRadius: 0,
               p: isVerySmallScreen ? 2 : 3,
               textAlign: "center",
-              height: "auto", // Changed from 100% to auto to ensure content fits
+              height: "auto",
               minHeight: "100vh",
               color: "white",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              justifyContent: "flex-start", // Changed from center to flex-start
+              justifyContent: "flex-start",
               my: 0,
               mb: 0,
               zIndex: 3,
-              overflow: "visible", // Changed from auto to visible
-              overflowY: "visible", // Explicitly set overflow-y to visible
+              overflow: "visible",
+              overflowY: "visible",
               overflowX: "hidden",
               touchAction: "pan-y",
               ...fontStyle,
-              position: "relative", // Changed from absolute to relative
+              position: "relative",
               padding: { xs: 2, sm: 3, md: 4 },
               boxSizing: "border-box",
-              // Hide scrollbar on all devices
               "&::-webkit-scrollbar": {
                 display: "none",
               },
               scrollbarWidth: "none",
               msOverflowStyle: "none",
-              // Only show scrollbar for very small devices
               "@media (max-width: 375px) and (max-height: 667px)": {
                 "&::-webkit-scrollbar": {
                   display: "block",
@@ -684,7 +669,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                   alignItems: "center",
                   justifyContent: "center",
                   padding: 4,
-                  position: "absolute", // Changed from fixed to absolute
+                  position: "absolute",
                   left: "-9999px",
                   top: "-9999px",
                   pointerEvents: "none",
@@ -692,11 +677,11 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                   touchAction: "none",
                   opacity: 0,
                   zIndex: -999,
-                  visibility: "hidden", // Add explicit visibility control
+                  visibility: "hidden",
                   ...fontStyle,
                 }}
-                aria-hidden="true" // Ensure screen readers ignore this
-                tabIndex={-1} // Prevent focus
+                aria-hidden="true"
+                tabIndex={-1}
               >
                 <Typography
                   variant="h4"
@@ -745,7 +730,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                         sx={{
                           fontSize: "60%",
                           verticalAlign: "baseline",
-                          fontFamily: "'MyCustomFont', sans-serif",
+                          fontFamily: "Formula1", // Consistent with fontStyle
                         }}
                       >
                         s
@@ -818,7 +803,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                       sx={{
                         fontSize: "50%",
                         verticalAlign: "super",
-                        fontFamily: "'MyCustomFont', sans-serif",
+                        fontFamily: "Formula1", // Consistent with fontStyle
                         position: "relative",
                         bottom: "-0.6em",
                       }}
@@ -840,7 +825,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                 alignItems: "center",
                 mt: isVerySmallScreen ? 1 : 3,
                 paddingTop: 2,
-                paddingBottom: isVerySmallScreen ? "50px" : "100px", // Increased bottom padding for more space
+                paddingBottom: isVerySmallScreen ? "50px" : "100px",
               }}
             >
               <Button
@@ -858,7 +843,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                   textTransform: "none",
                   width: isVerySmallScreen ? "80%" : "60%",
                   "&:hover": { bgcolor: "rgba(120, 120, 120, 0.7)" },
-                  ...japaneseFontStyle,
+                  ...fontStyle,
                   position: "relative",
                   "& > *": {
                     transition: "opacity 0.2s ease-in-out",
@@ -880,7 +865,9 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                     生成中...
                   </>
                 ) : (
-                  "SNSでシェアする"
+                  <div style={{ fontFamily: "HiraginoBold" }}>
+                    SNSでシェアする
+                  </div>
                 )}
               </Button>
 
@@ -891,24 +878,23 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                   bgcolor: "rgba(100, 100, 100, 0.7)",
                   color: "white",
                   borderRadius: "24px",
-                  marginBottom: isVerySmallScreen ? "20px" : "30px", // Slightly increased margin
-                  padding: isVerySmallScreen ? "10px" : "12px", // Slightly increased padding
+                  marginBottom: isVerySmallScreen ? "20px" : "30px",
+                  padding: isVerySmallScreen ? "10px" : "12px",
                   fontSize: isVerySmallScreen ? "14px" : "16px",
                   fontWeight: "normal",
                   textTransform: "none",
                   width: isVerySmallScreen ? "80%" : "60%",
                   "&:hover": { bgcolor: "rgba(120, 120, 120, 0.7)" },
-                  ...japaneseFontStyle,
                 }}
                 onClick={onRetry}
               >
-                もう一度遊ぶ
+                <div style={{ fontFamily: "HiraginoBold" }}> もう一度遊ぶ</div>
               </Button>
 
               <button
                 onClick={handleCircuitJourneyClick}
                 style={{
-                  marginBottom: isVerySmallScreen ? "40px" : "60px", // Reduced from 150px to ensure it's visible
+                  marginBottom: isVerySmallScreen ? "40px" : "60px",
                   padding: isVerySmallScreen ? "10px" : "12px",
                   width: isVerySmallScreen ? "80%" : "90%",
                   borderRadius: "24px",
@@ -941,13 +927,13 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
           ...fontStyle,
           touchAction: "none",
           userSelect: "none",
-          pointerEvents: "auto", // Enable pointer events for this modal
+          pointerEvents: "auto",
         }}
         disableScrollLock={false}
         BackdropProps={{
           style: {
             touchAction: "none",
-            pointerEvents: "auto", // Ensure backdrop pointer events are properly set
+            pointerEvents: "auto",
           },
         }}
         disableRestoreFocus
@@ -970,7 +956,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
         >
           <IconButton
             onClick={() => {
-              cleanupAfterShare(); // Use the comprehensive cleanup function
+              cleanupAfterShare();
             }}
             sx={{
               position: "absolute",
@@ -1013,7 +999,7 @@ https://liff.line.me/2006572406-D3OkWx32?tcode=rCXml0000013431
                 p: 1,
               }}
               onClick={(e) => {
-                e.stopPropagation(); // Prevent event bubbling
+                e.stopPropagation();
                 shareScore();
               }}
             >

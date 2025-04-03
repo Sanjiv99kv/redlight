@@ -1,16 +1,57 @@
 @font-face {
-  font-family: 'MyCustomFont'; /* You can name this anything you like */
-  src: url('./assets/display-regular.ttf') format('truetype'); /* Path to your .ttf file */
+  font-family: "MyCustomFont"; /* You can name this anything you like */
+  src: url("./assets/display-regular.ttf") format("truetype"); /* Path to your .ttf file */
   font-weight: normal; /* Optional: specify weight */
   font-style: normal; /* Optional: specify style */
-  }
-
-  @font-face {
-    font-family: 'Hiragino Kaku Gothic Pro';
-    src: url('./assets/Hiragino-Kakugo-Pro\ W6.otf') format('opentype');
 }
 
-html, body {
+@font-face {
+  font-family: "Hiragino Kaku Gothic Pro";
+  src: url("./assets/Hiragino-Kakugo-Pro\ W6.otf") format("opentype");
+}
+
+/*  */
+/* Updated the fonts */
+
+/* english */
+@font-face {
+  font-family: "formula1";
+  src: url("/fonts/Formula1-Display-Regular.ttf");
+}
+@font-face {
+  font-family: "formula1Bold";
+  src: url("/fonts/Formula1-Display-Bold.ttf");
+}
+/* isme koi change mat karo jo bhi kar raha hian  */
+
+.formula1 {
+  font-family: "formula1";
+}
+
+.formula1Bold {
+  font-family: "formula1Bold";
+}
+
+/* Japanese */
+@font-face {
+  font-family: "Hiragino";
+  src: url("/fonts/Hiragino-Kakugo-Pro-W3.otf") format("opentype");
+}
+@font-face {
+  font-family: "HiraginoBold";
+  src: url("/fonts/Hiragino-Kakugo-Pro-W6.otf") format("opentype");
+}
+
+.Hiragino {
+  font-family: "Hiragino";
+}
+
+.HiraginoBold {
+  font-family: "HiraginoBold";
+}
+
+html,
+body {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -30,7 +71,7 @@ body {
   height: 100vh;
   margin: 0;
   padding: 0;
-  font-family: 'MyCustomFont';
+  font-family: "MyCustomFont";
   overflow: hidden;
   position: relative;
 }
@@ -53,13 +94,21 @@ body {
 
 /* Fade animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* Glow effect for reaction time */
@@ -93,7 +142,7 @@ button {
   background: none;
   border: none;
   padding: 0;
-  font-family: 'MyCustomFont', sans-serif;
+  font-family: "MyCustomFont", sans-serif;
   cursor: pointer;
   outline: inherit;
 }
