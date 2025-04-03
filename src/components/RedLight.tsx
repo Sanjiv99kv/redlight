@@ -183,7 +183,8 @@ const RedLight: React.FC = () => {
   const cacheBustTimestamp = useRef(Date.now());
   const tapTimeoutRef = useRef<number | null>(null);
 
-  const BUTTON_ENABLE_TIME = 5.2; // Time in seconds when countdown ends
+  const BUTTON_PAUSE_TIME = 5; // Pause at 5.15 seconds
+  const BUTTON_RESUME_TIME = 5.25; // Resume at 5.20 seconds
   const RANDOM_DELAY_MAX = 3000; // Maximum delay in ms (3 seconds)
 
   // Initialize Web Audio API and preload audio
@@ -191,7 +192,6 @@ const RedLight: React.FC = () => {
     backgroundImageRef.current = preloadBackgroundImage();
 
     const preloadMedia = async () => {
-      // Video preloading
       if (videoRef.current) {
         videoRef.current.src = `${FullReactionVideo}?t=${cacheBustTimestamp.current}`;
         videoRef.current.preload = "auto";
@@ -203,7 +203,6 @@ const RedLight: React.FC = () => {
         videoRef.current.load();
       }
 
-      // Countdown audio preloading
       if (countdownAudioRef.current) {
         countdownAudioRef.current.src = `${CountdownSound}?t=${cacheBustTimestamp.current}`;
         countdownAudioRef.current.preload = "auto";
@@ -212,7 +211,6 @@ const RedLight: React.FC = () => {
         countdownAudioRef.current.load();
       }
 
-      // Web Audio API for car start sound
       try {
         startAudioContextRef.current = new (window.AudioContext ||
           (window as any).webkitAudioContext)();
@@ -259,7 +257,7 @@ const RedLight: React.FC = () => {
       const source = startAudioContextRef.current.createBufferSource();
       source.buffer = startAudioBufferRef.current;
       source.connect(startAudioContextRef.current.destination);
-      source.start(0); // Play immediately
+      source.start(0);
       console.log("Car start sound played at:", Date.now());
     }
   };
@@ -282,7 +280,7 @@ const RedLight: React.FC = () => {
       const handleTimeUpdate = () => {
         if (
           videoRef.current &&
-          videoRef.current.currentTime >= BUTTON_ENABLE_TIME
+          videoRef.current.currentTime >= BUTTON_PAUSE_TIME
         ) {
           videoRef.current.pause();
           if (countdownAudioRef.current) {
@@ -294,9 +292,12 @@ const RedLight: React.FC = () => {
             Math.random() * (RANDOM_DELAY_MAX + 1)
           );
           setTimeout(() => {
-            setButtonActive(true);
-            setReactionStartTime(Date.now());
-            setGameState("waitingForTap");
+            if (videoRef.current) {
+              videoRef.current.currentTime = BUTTON_RESUME_TIME; // Jump to 5.20s
+              setButtonActive(true);
+              setReactionStartTime(Date.now());
+              setGameState("waitingForTap");
+            }
           }, randomDelay);
         }
       };
@@ -331,8 +332,7 @@ const RedLight: React.FC = () => {
 
       console.log("Tap clicked at:", tapTime);
 
-      // Play audio and video synchronously
-      playCarStartSound(); // Using Web Audio API for minimal latency
+      playCarStartSound();
       if (videoRef.current) {
         videoRef.current
           .play()
