@@ -352,7 +352,7 @@ const RedLight: React.FC = () => {
       const handleTimeUpdate = () => {
         if (
           videoRef.current &&
-          videoRef.current.currentTime >= BUTTON_PAUSE_TIME
+          videoRef.current.currentTime >= BUTTON_ENABLE_TIME
         ) {
           videoRef.current.pause();
           if (countdownAudioRef.current) {
