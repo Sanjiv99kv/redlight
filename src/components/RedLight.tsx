@@ -161,11 +161,9 @@ const MissionBanner = ({
 
 const RedLight: React.FC = () => {
   const [gameState, setGameState] = useState<
-    "init" | "missionIntro" | "playing" | "waitingForTap" | "results"
+    "init" | "missionIntro" | "playing" | "waitingForTap" | "results" | "reloading"
   >("init");
-  const [reactionStartTime, setReactionStartTime] = useState<number | null>(
-    null
-  );
+  const [reactionStartTime, setReactionStartTime] = useState<number | null>(null);
   const [reactionTime, setReactionTime] = useState<number | null>(null);
   const [openModal, setOpenModal] = useState(false);
   const [buttonActive, setButtonActive] = useState(false);
@@ -173,6 +171,9 @@ const RedLight: React.FC = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [showMissionBanner, setShowMissionBanner] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const [isPlayingAfterTap, setIsPlayingAfterTap] = useState(false);
+  const tapDebounceRef = useRef<boolean>(false);
+  const processingTapRef = useRef<boolean>(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const countdownAudioRef = useRef<HTMLAudioElement>(null);
@@ -182,99 +183,170 @@ const RedLight: React.FC = () => {
   const backgroundImageRef = useRef<HTMLImageElement | null>(null);
   const cacheBustTimestamp = useRef(Date.now());
   const tapTimeoutRef = useRef<number | null>(null);
+  const videoTimeUpdateListenerRef = useRef<(() => void) | null>(null);
 
-  const BUTTON_PAUSE_TIME = 5; // Pause at 5.15 seconds
-  const BUTTON_RESUME_TIME = 5.25; // Resume at 5.20 seconds
-  const RANDOM_DELAY_MAX = 3000; // Maximum delay in ms (3 seconds)
+  const BUTTON_PAUSE_TIME = 5;
+  const BUTTON_RESUME_TIME = 5.25;
+  const RANDOM_DELAY_MAX = 3000;
+  const POST_TAP_DURATION = 1000;
 
-  // Initialize Web Audio API and preload audio
-  useEffect(() => {
+  // Preload media function
+  const preloadMedia = async () => {
+    setIsVideoLoading(true);
+    const timestamp = Date.now();
+    cacheBustTimestamp.current = timestamp;
+
     backgroundImageRef.current = preloadBackgroundImage();
 
-    const preloadMedia = async () => {
-      if (videoRef.current) {
-        videoRef.current.src = `${FullReactionVideo}?t=${cacheBustTimestamp.current}`;
-        videoRef.current.preload = "auto";
-        videoRef.current.onloadeddata = () => {
-          setVideoReady(true);
+    if (videoRef.current) {
+      videoRef.current.src = `${FullReactionVideo}?t=${timestamp}`;
+      videoRef.current.preload = "auto";
+      await new Promise<void>((resolve) => {
+        const handleLoaded = () => {
           console.log("Video loaded");
+          videoRef.current?.removeEventListener("loadeddata", handleLoaded);
+          resolve();
         };
-        videoRef.current.onerror = () => setVideoError("Failed to load video.");
-        videoRef.current.load();
-      }
+        
+        const handleError = () => {
+          setVideoError("Failed to load video.");
+          videoRef.current?.removeEventListener("error", handleError);
+          resolve();
+        };
+        
+        if (videoRef.current) {
+          videoRef.current.addEventListener("loadeddata", handleLoaded);
+        }
+        if (videoRef.current) {
+          videoRef.current.addEventListener("error", handleError);
+        }
+        if (videoRef.current) {
+          videoRef.current.load();
+        }
+      });
+    }
 
-      if (countdownAudioRef.current) {
-        countdownAudioRef.current.src = `${CountdownSound}?t=${cacheBustTimestamp.current}`;
-        countdownAudioRef.current.preload = "auto";
-        countdownAudioRef.current.onloadeddata = () =>
+    if (countdownAudioRef.current) {
+      countdownAudioRef.current.src = `${CountdownSound}?t=${timestamp}`;
+      countdownAudioRef.current.preload = "auto";
+      await new Promise<void>((resolve) => {
+        const handleLoaded = () => {
           console.log("Countdown audio loaded");
-        countdownAudioRef.current.load();
-      }
+          countdownAudioRef.current?.removeEventListener("loadeddata", handleLoaded);
+          resolve();
+        };
+        
+        if (countdownAudioRef.current) {
+          countdownAudioRef.current.addEventListener("loadeddata", handleLoaded);
+        }
+        if (countdownAudioRef.current) {
+          countdownAudioRef.current.load();
+        }
+      });
+    }
 
-      try {
-        startAudioContextRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
-        const response = await fetch(
-          `${CarStartSound}?t=${cacheBustTimestamp.current}`
-        );
-        const arrayBuffer = await response.arrayBuffer();
-        startAudioBufferRef.current =
-          await startAudioContextRef.current.decodeAudioData(arrayBuffer);
-        console.log("Car start audio buffer loaded");
-      } catch (error) {
-        console.error("Failed to load car start audio:", error);
-      }
-    };
-
-    preloadMedia();
-
-    return () => {
-      if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.src = "";
-        videoRef.current.load();
-      }
-      if (countdownAudioRef.current) {
-        countdownAudioRef.current.pause();
-        countdownAudioRef.current.src = "";
-        countdownAudioRef.current.load();
-      }
+    try {
       if (startAudioContextRef.current) {
         startAudioContextRef.current.close();
-        startAudioContextRef.current = null;
       }
-    };
+      startAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const response = await fetch(`${CarStartSound}?t=${timestamp}`);
+      const arrayBuffer = await response.arrayBuffer();
+      startAudioBufferRef.current = await startAudioContextRef.current.decodeAudioData(arrayBuffer);
+      console.log("Car start audio buffer loaded");
+    } catch (error) {
+      console.error("Failed to load car start audio:", error);
+    }
+
+    setVideoReady(true);
+    setIsVideoLoading(false);
+  };
+
+  // Cleanup function to remove all event listeners and timeouts
+  const cleanupResources = () => {
+    if (tapTimeoutRef.current) {
+      clearTimeout(tapTimeoutRef.current);
+      tapTimeoutRef.current = null;
+    }
+    
+    if (videoRef.current && videoTimeUpdateListenerRef.current) {
+      videoRef.current.removeEventListener("timeupdate", videoTimeUpdateListenerRef.current);
+      videoTimeUpdateListenerRef.current = null;
+      videoRef.current.pause();
+      videoRef.current.src = "";
+      videoRef.current.load();
+    }
+    
+    if (countdownAudioRef.current) {
+      countdownAudioRef.current.pause();
+      countdownAudioRef.current.src = "";
+      countdownAudioRef.current.load();
+    }
+    
+    if (startAudioContextRef.current) {
+      startAudioContextRef.current.close();
+      startAudioContextRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    preloadMedia();
+    
+    return cleanupResources;
   }, []);
 
-  // Play car start sound with Web Audio API
+  useEffect(() => {
+    if (openModal && gameState === "results") {
+      preloadMedia().then(() => {
+        console.log("Media preloaded while modal is open");
+      });
+    }
+  }, [openModal]);
+
   const playCarStartSound = () => {
     if (
       startAudioContextRef.current &&
       startAudioBufferRef.current &&
       startAudioContextRef.current.state !== "closed"
     ) {
-      const source = startAudioContextRef.current.createBufferSource();
-      source.buffer = startAudioBufferRef.current;
-      source.connect(startAudioContextRef.current.destination);
-      source.start(0);
-      console.log("Car start sound played at:", Date.now());
+      try {
+        const source = startAudioContextRef.current.createBufferSource();
+        source.buffer = startAudioBufferRef.current;
+        source.connect(startAudioContextRef.current.destination);
+        source.start(0);
+        console.log("Car start sound played at:", Date.now());
+      } catch (error) {
+        console.error("Error playing car start sound:", error);
+      }
     }
   };
 
   useEffect(() => {
     if (gameState === "playing" && videoRef.current && videoReady) {
+      // Clean up previous listeners first
+      if (videoTimeUpdateListenerRef.current && videoRef.current) {
+        videoRef.current.removeEventListener("timeupdate", videoTimeUpdateListenerRef.current);
+      }
+      
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {
-        setVideoError("Error playing video.");
-        setGameState("init");
-      });
+      
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.error("Error playing video:", error);
+          setVideoError("Error playing video.");
+          setGameState("init");
+        });
+      }
 
       if (countdownAudioRef.current) {
         countdownAudioRef.current.currentTime = 0;
-        countdownAudioRef.current
-          .play()
-          .catch(() => console.log("Countdown audio failed"));
+        const audioPromise = countdownAudioRef.current.play();
+        if (audioPromise !== undefined) {
+          audioPromise.catch((error) => {
+            console.error("Countdown audio failed:", error);
+          });
+        }
       }
 
       const handleTimeUpdate = () => {
@@ -288,12 +360,16 @@ const RedLight: React.FC = () => {
             countdownAudioRef.current.currentTime = 0;
           }
 
-          const randomDelay = Math.floor(
-            Math.random() * (RANDOM_DELAY_MAX + 1)
-          );
+          // Remove listener to prevent multiple triggers
+          if (videoTimeUpdateListenerRef.current && videoRef.current) {
+            videoRef.current.removeEventListener("timeupdate", videoTimeUpdateListenerRef.current);
+            videoTimeUpdateListenerRef.current = null;
+          }
+
+          const randomDelay = Math.floor(Math.random() * (RANDOM_DELAY_MAX + 1));
           setTimeout(() => {
-            if (videoRef.current) {
-              videoRef.current.currentTime = BUTTON_RESUME_TIME; // Jump to 5.20s
+            if (videoRef.current && gameState === "playing") {
+              videoRef.current.currentTime = BUTTON_RESUME_TIME;
               setButtonActive(true);
               setReactionStartTime(Date.now());
               setGameState("waitingForTap");
@@ -301,10 +377,16 @@ const RedLight: React.FC = () => {
           }, randomDelay);
         }
       };
-
-      videoRef.current.addEventListener("timeupdate", handleTimeUpdate);
-      return () =>
-        videoRef.current?.removeEventListener("timeupdate", handleTimeUpdate);
+      
+      videoTimeUpdateListenerRef.current = handleTimeUpdate;
+      videoRef.current.addEventListener("timeupdate", videoTimeUpdateListenerRef.current);
+      
+      return () => {
+        if (videoRef.current && videoTimeUpdateListenerRef.current) {
+          videoRef.current.removeEventListener("timeupdate", videoTimeUpdateListenerRef.current);
+          videoTimeUpdateListenerRef.current = null;
+        }
+      };
     }
   }, [gameState, videoReady]);
 
@@ -324,44 +406,98 @@ const RedLight: React.FC = () => {
   };
 
   const handleTapClick = () => {
-    if (gameState === "waitingForTap" && buttonActive && reactionStartTime) {
+    // Check if we're already processing a tap or debounced
+    if (tapDebounceRef.current || processingTapRef.current) {
+      console.log("Tap debounced or already processing, ignoring...");
+      return;
+    }
+
+    console.log("handleTapClick called at:", Date.now());
+
+    if (
+      gameState === "waitingForTap" &&
+      buttonActive &&
+      reactionStartTime &&
+      !isPlayingAfterTap
+    ) {
+      // Set both flags to prevent duplicate processing
+      tapDebounceRef.current = true;
+      processingTapRef.current = true;
+      
       const tapTime = Date.now();
       const timeDiff = tapTime - reactionStartTime;
       setReactionTime(timeDiff);
       setButtonActive(false);
+      setIsPlayingAfterTap(true);
 
-      console.log("Tap clicked at:", tapTime);
+      console.log("Tap processed at:", tapTime);
 
+      // Play the car start sound once
       playCarStartSound();
+
       if (videoRef.current) {
-        videoRef.current
-          .play()
-          .then(() => {
-            console.log(
-              "Video played at:",
-              Date.now(),
-              "Delay:",
-              Date.now() - tapTime
-            );
-          })
-          .catch((err) => console.log("Video play failed:", err));
+        // Remove any existing timeupdate listeners to prevent conflicts
+        if (videoTimeUpdateListenerRef.current) {
+          videoRef.current.removeEventListener("timeupdate", videoTimeUpdateListenerRef.current);
+          videoTimeUpdateListenerRef.current = null;
+        }
+        
+        // Ensure correct position and play only once
+        videoRef.current.currentTime = BUTTON_RESUME_TIME;
+        
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log(
+                "Video playback started at:",
+                Date.now(),
+                "Delay:",
+                Date.now() - tapTime
+              );
+            })
+            .catch((err) => {
+              console.error("Video play failed:", err);
+              // Release processing flag on error
+              processingTapRef.current = false;
+            });
+        }
       }
 
-      if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+      // Clear any existing timeout
+      if (tapTimeoutRef.current) {
+        clearTimeout(tapTimeoutRef.current);
+      }
+      
       tapTimeoutRef.current = window.setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.pause();
+          console.log("Video paused at:", Date.now());
         }
         setGameState("results");
         setOpenModal(true);
+        setIsPlayingAfterTap(false);
+        tapDebounceRef.current = false;
+        processingTapRef.current = false;
         console.log("Modal opened at:", Date.now());
-      }, 1500);
+      }, POST_TAP_DURATION);
+    } else {
+      console.log("Tap ignored due to conditions not met:", {
+        gameState,
+        buttonActive,
+        reactionStartTime,
+        isPlayingAfterTap,
+      });
     }
   };
 
-  const handleRestartGame = () => {
+  const handleRestartGame = async () => {
     setOpenModal(false);
-    if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+    cleanupResources();
+    setGameState("reloading");
+    
+    await preloadMedia();
+    
     setTimeout(() => {
       setGameState("init");
       setReactionTime(null);
@@ -369,39 +505,9 @@ const RedLight: React.FC = () => {
       setButtonActive(false);
       setVideoError(null);
       setShowMissionBanner(false);
-      setVideoReady(false);
-      const timestamp = Date.now();
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-        videoRef.current.src = `${FullReactionVideo}?t=${timestamp}`;
-        videoRef.current.load();
-      }
-      if (countdownAudioRef.current) {
-        countdownAudioRef.current.pause();
-        countdownAudioRef.current.currentTime = 0;
-        countdownAudioRef.current.src = `${CountdownSound}?t=${timestamp}`;
-        countdownAudioRef.current.load();
-      }
-      if (startAudioContextRef.current) {
-        startAudioContextRef.current.close();
-        startAudioContextRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
-        fetch(`${CarStartSound}?t=${timestamp}`)
-          .then((response) => response.arrayBuffer())
-          .then((arrayBuffer) =>
-            startAudioContextRef.current!.decodeAudioData(arrayBuffer)
-          )
-          .then((buffer) => {
-            startAudioBufferRef.current = buffer;
-            console.log("Car start audio reloaded");
-          })
-          .catch((error) =>
-            console.error("Failed to reload car start audio:", error)
-          );
-      }
-      cacheBustTimestamp.current = timestamp;
-      backgroundImageRef.current = preloadBackgroundImage();
+      setIsPlayingAfterTap(false);
+      tapDebounceRef.current = false;
+      processingTapRef.current = false;
     }, 50);
   };
 
@@ -441,7 +547,7 @@ const RedLight: React.FC = () => {
           backgroundColor: "#000",
         }}
       >
-        {(gameState === "init" || isVideoLoading) && (
+        {(gameState === "init" || gameState === "reloading" || isVideoLoading) && (
           <Box
             sx={{
               position: "absolute",
@@ -484,12 +590,9 @@ const RedLight: React.FC = () => {
                 zIndex: 4,
               }}
             >
-              {isVideoLoading ? (
+              {(isVideoLoading || gameState === "reloading") ? (
                 <>
-                  <CircularProgress
-                    sx={{ color: "#E00400", mb: 1 }}
-                    size={50}
-                  />
+                  <CircularProgress sx={{ color: "#E00400", mb: 1 }} size={50} />
                   <Box sx={{ color: "white", fontSize: "16px", mt: 1 }}>
                     Loading Game...
                   </Box>
@@ -511,22 +614,13 @@ const RedLight: React.FC = () => {
                       border: "none",
                       fontSize: "20px",
                       fontWeight: "bold",
-                      cursor:
-                        gameState === "init" && videoReady
-                          ? "pointer"
-                          : "default",
+                      cursor: gameState === "init" && videoReady ? "pointer" : "default",
                       boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                       transition: "all 0.3s ease",
                       fontFamily: "Formula1",
                       "&:hover": {
-                        backgroundColor:
-                          gameState === "init" && videoReady
-                            ? "#dcdde1"
-                            : "#f5f6fa",
-                        transform:
-                          gameState === "init" && videoReady
-                            ? "translateY(-2px)"
-                            : "none",
+                        backgroundColor: gameState === "init" && videoReady ? "#dcdde1" : "#f5f6fa",
+                        transform: gameState === "init" && videoReady ? "translateY(-2px)" : "none",
                       },
                     }}
                   >
@@ -581,7 +675,7 @@ const RedLight: React.FC = () => {
             objectFit: "cover",
             objectPosition: "center",
             zIndex: 1,
-            display: gameState !== "init" && !isVideoLoading ? "block" : "none",
+            display: gameState !== "init" && gameState !== "reloading" && !isVideoLoading ? "block" : "none",
             backgroundColor: "#000",
           }}
           playsInline
