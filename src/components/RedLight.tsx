@@ -196,7 +196,7 @@ const RedLight = () => {
   const processingTapRef = useRef<boolean>(false);
   const videoTimeUpdateListenerRef = useRef<(() => void) | null>(null);
 
-  const BUTTON_PAUSE_TIME = 5; // Pause at 5.15 seconds
+  const BUTTON_PAUSE_TIME = 4.9; // Pause at 4.9 seconds
   const BUTTON_RESUME_TIME = 5.21; // Resume from 5.15 seconds
   const FIXED_DELAY = 1000; // 3 second delay
   const POST_TAP_DURATION = 1000; // Duration after tap before showing results
@@ -263,7 +263,7 @@ const RedLight = () => {
         startAudioContextRef.current.close();
       }
       startAudioContextRef.current = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+        (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const response = await fetch(`${CarStartSound}?t=${timestamp}`);
       const arrayBuffer = await response.arrayBuffer();
       startAudioBufferRef.current =
@@ -326,7 +326,7 @@ const RedLight = () => {
         console.log("Media preloaded while modal is open");
       });
     }
-  }, [openModal]);
+  }, [openModal, gameState]);
 
   const playCarStartSound = () => {
     if (
@@ -775,7 +775,7 @@ const RedLight = () => {
           playsInline
           preload="auto"
           muted
-          poster=""
+          poster="../assets/white-full-screen.jpg"
         />
 
         {(gameState === "playing" || gameState === "waitingForTap") && (
