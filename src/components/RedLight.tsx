@@ -653,9 +653,9 @@ const RedLight = () => {
                     sx={{ color: "#E00400", mb: 1 }}
                     size={50}
                   />
-                  <Box sx={{ color: "white", fontSize: "16px", mt: 1 }}>
+                  {/* <Box sx={{ color: "white", fontSize: "16px", mt: 1 }}>
                     Loading Game...
-                  </Box>
+                  </Box> */}
                 </>
               ) : (
                 <>
