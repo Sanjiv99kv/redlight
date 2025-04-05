@@ -157,6 +157,13 @@ const MissionBanner = ({
   );
 };
 
+// Add device detection
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    typeof navigator !== 'undefined' ? navigator.userAgent : ''
+  );
+};
+
 const RedLight = () => {
   const [gameState, setGameState] = useState<
     | "init"
@@ -203,9 +210,23 @@ const RedLight = () => {
     if (videoRef.current) {
       videoRef.current.src = `${FullReactionVideo}?t=${timestamp}`;
       videoRef.current.preload = "auto";
+      videoRef.current.crossOrigin = "anonymous";
+      videoRef.current.setAttribute("playsinline", "");
+      videoRef.current.setAttribute("webkit-playsinline", "");
+      
+      try {
+        videoRef.current.load();
+      } catch (e) {
+        console.error("Error during video load:", e);
+      }
+      
       await new Promise<void>((resolve) => {
         const handleLoaded = () => {
           videoRef.current?.removeEventListener("loadeddata", handleLoaded);
+          resolve();
+        };
+        const handleCanPlayThrough = () => {
+          videoRef.current?.removeEventListener("canplaythrough", handleCanPlayThrough);
           resolve();
         };
         const handleError = () => {
@@ -213,9 +234,10 @@ const RedLight = () => {
           videoRef.current?.removeEventListener("error", handleError);
           resolve();
         };
+        
         videoRef.current?.addEventListener("loadeddata", handleLoaded);
+        videoRef.current?.addEventListener("canplaythrough", handleCanPlayThrough);
         videoRef.current?.addEventListener("error", handleError);
-        videoRef.current?.load();
       });
     }
 
@@ -281,6 +303,22 @@ const RedLight = () => {
     return cleanupResources;
   }, []);
 
+  // Add additional video attributes for mobile
+  useEffect(() => {
+    if (videoRef.current) {
+      // Set additional attributes for better mobile compatibility
+      videoRef.current.setAttribute("webkit-playsinline", "true");
+      videoRef.current.setAttribute("x5-playsinline", "true");
+      videoRef.current.setAttribute("x5-video-player-type", "h5");
+      videoRef.current.setAttribute("x5-video-player-fullscreen", "true");
+      
+      // Force Android to prepare video
+      if (isMobileDevice()) {
+        videoRef.current.load();
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (openModal && gameState === "results") {
       preloadMedia().then(() => {
@@ -316,11 +354,40 @@ const RedLight = () => {
       }
 
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch((error) => {
-        console.error("Error playing video:", error);
-        setVideoError("Error playing video.");
-        setGameState("init");
-      });
+      
+      // Optimize video playback for mobile devices
+      if (isMobileDevice()) {
+        // Add a small delay before playing to ensure Android is ready
+        setTimeout(() => {
+          if (videoRef.current) {
+            // Force low-level play attempt for Android
+            const playPromise = videoRef.current.play();
+            
+            if (playPromise !== undefined) {
+              playPromise.catch(error => {
+                console.error("Error in delayed video play:", error);
+                // Try one more time with user interaction simulation for Android
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.play().catch(err => {
+                      console.error("Final play attempt failed:", err);
+                      setVideoError("Unable to play video. Please try again.");
+                      setGameState("init");
+                    });
+                  }
+                }, 100);
+              });
+            }
+          }
+        }, 100);
+      } else {
+        // Desktop browsers usually handle this better
+        videoRef.current.play().catch((error) => {
+          console.error("Error playing video:", error);
+          setVideoError("Error playing video.");
+          setGameState("init");
+        });
+      }
 
       if (countdownAudioRef.current) {
         countdownAudioRef.current.currentTime = 0;
@@ -383,10 +450,34 @@ const RedLight = () => {
   const startGame = () => {
     if (!videoReady) {
       setIsVideoLoading(true);
+      preloadMedia().then(() => {
+        setIsVideoLoading(false);
+        setGameState("missionIntro");
+        setTimeout(() => setShowMissionBanner(true), 100);
+      });
       return;
     }
+    
     setIsVideoLoading(false);
     setGameState("missionIntro");
+    
+    // For Android, pre-initialize the video
+    if (isMobileDevice() && videoRef.current) {
+      videoRef.current.load();
+      // Brief muted play to initialize the video element on Android
+      videoRef.current.muted = true;
+      videoRef.current.play().then(() => {
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.pause();
+            videoRef.current.currentTime = 0;
+          }
+        }, 50);
+      }).catch(err => {
+        console.warn("Pre-initialization play failed:", err);
+      });
+    }
+    
     setTimeout(() => setShowMissionBanner(true), 100);
   };
 
@@ -647,6 +738,8 @@ const RedLight = () => {
           }}
           playsInline
           preload="auto"
+          muted
+          poster=""
         />
 
         {(gameState === "playing" || gameState === "waitingForTap") && (
