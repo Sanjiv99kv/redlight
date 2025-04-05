@@ -688,6 +688,7 @@ const RedLight = () => {
                       maxWidth: "50%",
                       height: "auto",
                       marginTop: "25px",
+                      marginBottom: "5vh",
                     }}
                   />
                 </>
