@@ -740,7 +740,7 @@ const RedLight = () => {
           playsInline
           preload="auto"
           muted
-          poster=""
+          poster="../assets/white-full-screen.jpg"
         />
 
         {(gameState === "playing" || gameState === "waitingForTap") && (
