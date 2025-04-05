@@ -183,6 +183,7 @@ const RedLight = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [showMissionBanner, setShowMissionBanner] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const [showPlaceholder, setShowPlaceholder] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const countdownAudioRef = useRef<HTMLAudioElement>(null);
@@ -197,7 +198,7 @@ const RedLight = () => {
 
   const BUTTON_PAUSE_TIME = 4.9; // Pause at 4.9 seconds
   const BUTTON_RESUME_TIME = 5.21; // Resume from 5.15 seconds
-  const FIXED_DELAY = 3000; // 3 second delay
+  const FIXED_DELAY = 1000; // 3 second delay
   const POST_TAP_DURATION = 1000; // Duration after tap before showing results
 
   const preloadMedia = async () => {
@@ -364,15 +365,22 @@ const RedLight = () => {
             const playPromise = videoRef.current.play();
             
             if (playPromise !== undefined) {
-              playPromise.catch(error => {
+              playPromise.then(() => {
+                // Hide placeholder when video starts playing
+                setShowPlaceholder(false);
+              }).catch(error => {
                 console.error("Error in delayed video play:", error);
                 // Try one more time with user interaction simulation for Android
                 setTimeout(() => {
                   if (videoRef.current) {
-                    videoRef.current.play().catch(err => {
+                    videoRef.current.play().then(() => {
+                      // Hide placeholder when video starts playing
+                      setShowPlaceholder(false);
+                    }).catch(err => {
                       console.error("Final play attempt failed:", err);
                       setVideoError("Unable to play video. Please try again.");
                       setGameState("init");
+                      setShowPlaceholder(false);
                     });
                   }
                 }, 100);
@@ -382,10 +390,14 @@ const RedLight = () => {
         }, 100);
       } else {
         // Desktop browsers usually handle this better
-        videoRef.current.play().catch((error) => {
+        videoRef.current.play().then(() => {
+          // Hide placeholder when video starts playing
+          setShowPlaceholder(false);
+        }).catch((error) => {
           console.error("Error playing video:", error);
           setVideoError("Error playing video.");
           setGameState("init");
+          setShowPlaceholder(false);
         });
       }
 
@@ -448,6 +460,9 @@ const RedLight = () => {
   }, [gameState, videoReady]);
 
   const startGame = () => {
+    // Show placeholder immediately when START is clicked
+    setShowPlaceholder(true);
+    
     if (!videoReady) {
       setIsVideoLoading(true);
       preloadMedia().then(() => {
@@ -535,6 +550,7 @@ const RedLight = () => {
     setOpenModal(false);
     cleanupResources();
     setGameState("reloading");
+    setShowPlaceholder(false);
 
     await preloadMedia();
 
@@ -637,9 +653,9 @@ const RedLight = () => {
                     sx={{ color: "#E00400", mb: 1 }}
                     size={50}
                   />
-                  <Box sx={{ color: "white", fontSize: "16px", mt: 1 }}>
+                  {/* <Box sx={{ color: "white", fontSize: "16px", mt: 1 }}>
                     Loading Game...
-                  </Box>
+                  </Box> */}
                 </>
               ) : (
                 <>
@@ -709,6 +725,25 @@ const RedLight = () => {
               )}
             </Box>
           </Box>
+        )}
+
+        {/* White Placeholder when game is starting but before video plays */}
+        {showPlaceholder && gameState !== "init" && gameState !== "reloading" && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "white",
+              zIndex: 0.5,
+              display: 
+                gameState === "playing" || gameState === "waitingForTap" || gameState === "results"
+                  ? "none" 
+                  : "block",
+            }}
+          />
         )}
 
         {showMissionBanner && (

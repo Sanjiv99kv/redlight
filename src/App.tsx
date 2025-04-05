@@ -1,5 +1,7 @@
 import { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import RedLight from "./components/RedLight";
+import CustomComponent from "./components/CustomComponent";
 import "./App.css";
 
 function App() {
@@ -88,7 +90,12 @@ function App() {
       left: 0,
       touchAction: "none", // Disable browser handling of all touch gestures
     }}>
-      <RedLight />
+      <Router>
+        <Routes>
+          <Route path="/" element={<RedLight />} />
+          <Route path="/custom" element={<CustomComponent />} />
+        </Routes>
+      </Router>
     </div>
   );
 }
