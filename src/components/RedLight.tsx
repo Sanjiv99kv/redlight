@@ -262,7 +262,7 @@ const RedLight = () => {
         startAudioContextRef.current.close();
       }
       startAudioContextRef.current = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+        (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const response = await fetch(`${CarStartSound}?t=${timestamp}`);
       const arrayBuffer = await response.arrayBuffer();
       startAudioBufferRef.current =
@@ -325,7 +325,7 @@ const RedLight = () => {
         console.log("Media preloaded while modal is open");
       });
     }
-  }, [openModal]);
+  }, [openModal, gameState]);
 
   const playCarStartSound = () => {
     if (
