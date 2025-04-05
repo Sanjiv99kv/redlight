@@ -195,7 +195,7 @@ const RedLight = () => {
   const processingTapRef = useRef<boolean>(false);
   const videoTimeUpdateListenerRef = useRef<(() => void) | null>(null);
 
-  const BUTTON_PAUSE_TIME = 4.2; // Pause at 5.15 seconds
+  const BUTTON_PAUSE_TIME = 5; // Pause at 5.15 seconds
   const BUTTON_RESUME_TIME = 5.21; // Resume from 5.15 seconds
   const FIXED_DELAY = 3000; // 3 second delay
   const POST_TAP_DURATION = 1000; // Duration after tap before showing results
